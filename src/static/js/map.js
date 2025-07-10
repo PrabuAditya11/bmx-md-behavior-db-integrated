@@ -5,9 +5,15 @@ let showingTop5 = false;
 
 function initMap() {
     map = L.map('map').setView([-6.2088, 106.8456], 10);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors'
+    
+    // Replace your existing tileLayer with this
+    L.tileLayer('https://{s}.tile.jawg.io/jawg-streets/{z}/{x}/{y}{r}.png?access-token=IGbEI5YqiZJzxgxVplq1cIkR7K41bYxy1CoDm2xmtv83shMfGR0KGnWrFb7k77E4', {
+        attribution: '<a href="http://jawg.io" title="Tiles Courtesy of Jawg Maps" target="_blank">&copy; <b>Jawg</b>Maps</a>',
+        minZoom: 0,
+        maxZoom: 22,
+        subdomains: 'abcd',
     }).addTo(map);
+    
     loadMapData();
 }
 
@@ -32,9 +38,21 @@ function clearMap() {
 function getMarkerColor(coord, top5Stores) {
     if (coord.is_top_5) {
         const storeInfo = top5Stores.find(s => s.store_id === coord.store_id);
-        return storeInfo ? storeInfo.color : '#3388ff';
+        if (storeInfo) {
+            // Define high contrast colors for top 5 stores
+            const contrastColors = [
+                '#FF0000', // Bright Red
+                '#00FF00', // Bright Green  
+                '#0000FF', // Bright Blue
+                '#FF00FF', // Bright Magenta
+                '#FF8000'  // Bright Orange
+            ];
+            const storeIndex = top5Stores.indexOf(storeInfo);
+            return contrastColors[storeIndex] || '#FF0000';
+        }
+        return '#FF0000'; // Fallback red for top 5
     }
-    return '#3388ff';
+    return '#3388ff'; // Default blue for regular points
 }
 
 function displayPoints(data, showOnlyTop5 = false) {
@@ -63,7 +81,8 @@ function displayPoints(data, showOnlyTop5 = false) {
                     const color = getMarkerColor(coord, data.top_5_stores);
                     const marker = L.circleMarker([coord.latitude, coord.longitude], {
                         radius: coord.is_top_5 ? 6 : 4,
-                        color: color,
+                        color: coord.is_top_5 ? '#000000' : color, // Black outline for top 5
+                        weight: coord.is_top_5 ? 2 : 1, // Thicker outline for top 5
                         fillColor: color,
                         fillOpacity: 0.7
                     });
@@ -92,7 +111,8 @@ function displayPoints(data, showOnlyTop5 = false) {
             const color = getMarkerColor(coord, data.top_5_stores);
             const marker = L.circleMarker([coord.latitude, coord.longitude], {
                 radius: coord.is_top_5 ? 6 : 4,
-                color: color,
+                color: coord.is_top_5 ? '#000000' : color, // Black outline for top 5
+                weight: coord.is_top_5 ? 0.5 : 0.2, // Thicker outline for top 5
                 fillColor: color,
                 fillOpacity: 0.7
             }).addTo(map);
@@ -151,9 +171,14 @@ function updateInfoPanel(data) {
         `;
     }
     
-    const statsHtml = `
-        <div class="stats-section">
-            <h3>📊 Analysis Statistics</h3>
+    const headerHtml = `
+        <div class="analysis-header">
+            <h3 style="margin: 0; color: #2c3e50;">📊 Analysis Statistics</h3>
+        </div>
+    `;
+    
+    const contentHtml = `
+        <div class="analysis-content">
             <div class="date-range" style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
                 <p style="margin: 0;"><strong>Period: (YYYY/MM/DD) </strong></p>
                 <p style="margin: 5px 0; font-size: 1.1em;">
@@ -169,7 +194,7 @@ function updateInfoPanel(data) {
         </div>
     `;
     
-    infoPanel.innerHTML = statsHtml;
+    infoPanel.innerHTML = headerHtml + contentHtml;
     
     // Add toggle button handler
     document.getElementById('toggle-top5').addEventListener('click', function() {
@@ -179,9 +204,51 @@ function updateInfoPanel(data) {
     });
 }
 
+// File input handling function
+function setupFileHandling() {
+    const fileInput = document.getElementById('csv-file');
+    const fileLabel = document.querySelector('.file-input-label');
+    const fileNameDisplay = document.getElementById('file-name-display');
+    const uploadBtn = document.getElementById('upload-btn');
+    const removeBtn = document.getElementById('remove-file');
+    
+    if (!fileInput || !fileLabel || !fileNameDisplay || !uploadBtn || !removeBtn) return;
+    
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            // Show file name
+            fileNameDisplay.textContent = file.name;
+            fileNameDisplay.style.display = 'block';
+            
+            // Show upload and remove buttons
+            uploadBtn.style.display = 'inline-block';
+            removeBtn.style.display = 'inline-block';
+            
+            // Update label text
+            fileLabel.textContent = 'Change File';
+        } else {
+            resetFileDisplay();
+        }
+    });
+    
+    removeBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        resetFileDisplay();
+    });
+    
+    function resetFileDisplay() {
+        fileNameDisplay.style.display = 'none';
+        uploadBtn.style.display = 'none';
+        removeBtn.style.display = 'none';
+        fileLabel.textContent = 'Choose CSV File';
+    }
+}
+
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     initMap();
+    setupFileHandling();
     
     // Handle file upload
     const uploadForm = document.getElementById('upload-form');
@@ -221,11 +288,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     if (data.success) {
                         clearMap();
-                        document.getElementById('info-panel').innerHTML = '<p>No data loaded</p>';
+                        showEmptyAnalysisPanel();
                     }
                 })
                 .catch(error => console.error('Error:', error));
             }
         });
     }
+    
+    // Show empty analysis panel on initial load
+    showEmptyAnalysisPanel();
 });
+
+// Add this new function to show empty analysis panel
+function showEmptyAnalysisPanel() {
+    const infoPanel = document.getElementById('info-panel');
+    if (!infoPanel) return;
+    
+    const headerHtml = `
+        <div class="analysis-header">
+            <h3 style="margin: 0; color: #2c3e50;">📊 Analysis Statistics</h3>
+        </div>
+    `;
+    
+    const contentHtml = `
+        <div class="analysis-content">
+            <div class="date-range" style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                <p style="margin: 0; color: #666;">Upload a CSV file to view date range</p>
+            </div>
+            <div style="text-align: center; padding: 20px; color: #666;">
+                <p>Information will be displayed here after uploading data</p>
+                <p><small>You will see:</small></p>
+                <ul style="text-align: left; color: #666;">
+                    <li>Total visited points</li>
+                    <li>Total unique stores</li>
+                    <li>Top 5 most visited stores</li>
+                </ul>
+            </div>
+        </div>
+    `;
+    
+    infoPanel.innerHTML = headerHtml + contentHtml;
+}

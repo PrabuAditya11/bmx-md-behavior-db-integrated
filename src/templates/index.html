@@ -10,103 +10,59 @@
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
     
+    <!-- Jawg Maps CSS -->
+    <link rel="stylesheet" href="https://api.jawg.io/styles/jawg-streets/style.min.css">
+    
     <!-- MarkerCluster CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"/>
     
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-        #map {
-            width: 100%;
-            height: 100vh;
-        }
-        .control-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 4px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .info-panel {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 1000;
-            background: white;
-            padding: 10px;
-            border-radius: 4px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            max-height: 200px;
-            overflow-y: auto;
-            min-width: 200px;
-        }
-        button {
-            padding: 8px 16px;
-            margin: 5px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button[type="submit"] {
-            background: #4CAF50;
-            color: white;
-        }
-        #clear-data {
-            background: #f44336;
-            color: white;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        
-        .top-5-section {
-            background: white;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 15px;
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div id="map"></div>
-    
-    <div class="control-panel">
-        <form id="upload-form" enctype="multipart/form-data">
-            <input type="file" id="csv-file" name="csv_file" accept=".csv" required>
-            <!-- Note: name="csv_file" is required -->
-            <button type="submit">Upload CSV</button>
-        </form>
-        <button id="clear-data">Clear Data</button>
+    <!-- Header with File Upload -->
+    <div class="header">
+        <h1>🗺️ Store Visit Map Analysis</h1>
+        <div class="control-panel">
+            <div class="file-actions-group">
+                <form id="upload-form" enctype="multipart/form-data">
+                    <div class="file-upload-container">
+                        <div class="file-input-wrapper">
+                            <input type="file" id="csv-file" name="csv_file" accept=".csv" required>
+                            <label for="csv-file" class="file-input-label">Choose CSV File</label>
+                        </div>
+                        <div id="file-name-display" class="file-name-display" style="display: none;"></div>
+                        <div class="file-actions">
+                            <button type="submit" id="upload-btn" style="display: none;">Upload CSV</button>
+                            <button type="button" id="remove-file" style="display: none; background: #6c757d;">Remove</button>
+                        </div>
+                    </div>
+                </form>
+                <button id="clear-data">Clear Data</button>
+            </div>
+            
+            <div class="required-info">
+                <strong>Required columns:</strong> longitude, latitude, store_name, store_id, full_name, tanggal
+            </div>
+        </div>
     </div>
     
-    <div id="info-panel" class="info-panel">
-        <h3>Store Visit Analysis</h3>
-        <p>Upload a CSV file to start analysis.</p>
-        <p>Required columns:</p>
-        <ul>
-            <li>longitude</li>
-            <li>latitude</li>
-            <li>store_name</li>
-            <li>store_id</li>
-            <li>full_name</li>
-            <li>tanggal</li>
-        </ul>
+    <!-- Map Container -->
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+    
+    <!-- Analysis Panel at Bottom -->
+    <div id="info-panel" class="analysis-panel">
+        <div class="analysis-header">
+            <h3 style="margin: 0; color: #2c3e50;">📊 Analysis Dashboard</h3>
+        </div>
+        <div class="analysis-content">
+            <div class="stats-section">
+                <p>Upload a CSV file to start the analysis and visualize store visit patterns on the map.</p>
+            </div>
+        </div>
     </div>
 
     <!-- Leaflet JS -->
