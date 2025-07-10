@@ -217,15 +217,10 @@ function setupFileHandling() {
     fileInput.addEventListener('change', function() {
         const file = this.files[0];
         if (file) {
-            // Show file name
             fileNameDisplay.textContent = file.name;
             fileNameDisplay.style.display = 'block';
-            
-            // Show upload and remove buttons
             uploadBtn.style.display = 'inline-block';
             removeBtn.style.display = 'inline-block';
-            
-            // Update label text
             fileLabel.textContent = 'Change File';
         } else {
             resetFileDisplay();
@@ -233,8 +228,21 @@ function setupFileHandling() {
     });
     
     removeBtn.addEventListener('click', function() {
-        fileInput.value = '';
-        resetFileDisplay();
+        if (confirm('Clear all data?')) {
+            fetch('/api/clear', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    clearMap();
+                    showEmptyAnalysisPanel();
+                    fileInput.value = '';
+                    resetFileDisplay();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
     });
     
     function resetFileDisplay() {

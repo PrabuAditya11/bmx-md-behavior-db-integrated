@@ -296,3 +296,12 @@ button[type="submit"]:hover {
         max-width: 150px;
     }
 }
+
+#remove-file {
+    background: #dc3545;
+    color: white;
+}
+
+#remove-file:hover {
+    background: #c82333;
+}
