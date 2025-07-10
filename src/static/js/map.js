@@ -57,7 +57,13 @@ function getMarkerColor(coord, top5Stores) {
 
 function displayPoints(data, showOnlyTop5 = false) {
     clearMap();
-    
+
+    // Helper function to get store rank
+    function getStoreRank(storeId, top5Stores) {
+        const index = top5Stores.findIndex(s => s.store_id === storeId);
+        return index !== -1 ? index + 1 : null;
+    }
+
     const coordinates = showOnlyTop5 
         ? data.coordinates.filter(coord => coord.is_top_5)
         : data.coordinates;
@@ -87,12 +93,15 @@ function displayPoints(data, showOnlyTop5 = false) {
                         fillOpacity: 0.7
                     });
                     
+                    // Get rank if it's a top 5 store
+                    const rank = coord.is_top_5 ? getStoreRank(coord.store_id, data.top_5_stores) : null;
+                    
                     marker.bindPopup(`
                         <b>${coord.store_name}</b><br>
                         Store_ID: ${coord.store_id}<br>
                         Visitor: ${coord.full_name}<br>
                         Date: ${coord.tanggal}
-                        ${coord.is_top_5 ? '<br><strong style="color: ' + color + '">Top 5 Most Visited!</strong>' : ''}
+                        ${coord.is_top_5 ? `<br><strong style="color: ${color}">Rank #${rank} Most Visited Store!</strong>` : ''}
                     `);
                     
                     markerClusterGroup.addLayer(marker);
@@ -117,12 +126,15 @@ function displayPoints(data, showOnlyTop5 = false) {
                 fillOpacity: 0.7
             }).addTo(map);
             
+            // Get rank if it's a top 5 store
+            const rank = coord.is_top_5 ? getStoreRank(coord.store_id, data.top_5_stores) : null;
+            
             marker.bindPopup(`
                 <b>${coord.store_name}</b><br>
                 Store_ID: ${coord.store_id}<br>
                 Visitor: ${coord.full_name}<br>
                 Date: ${coord.tanggal}
-                ${coord.is_top_5 ? '<br><strong style="color: ' + color + '">Top 5 Most Visited!</strong>' : ''}
+                ${coord.is_top_5 ? `<br><strong style="color: ${color}">Rank #${rank} Most Visited Store!</strong>` : ''}
             `);
             
             markers.push(marker);
