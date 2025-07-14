@@ -100,7 +100,8 @@ function displayPoints(data, showOnlyTop5 = false) {
                         <b>${coord.store_name}</b><br>
                         Store_ID: ${coord.store_id}<br>
                         Visitor: ${coord.full_name}<br>
-                        Date: ${coord.tanggal}
+                        Date: ${coord.tanggal}<br>
+                        Store Area: ${coord.area_name || 'N/A'}
                         ${coord.is_top_5 ? `<br><strong style="color: ${color}">Rank #${rank} Most Visited Store!</strong>` : ''}
                     `);
                     
@@ -133,7 +134,8 @@ function displayPoints(data, showOnlyTop5 = false) {
                 <b>${coord.store_name}</b><br>
                 Store_ID: ${coord.store_id}<br>
                 Visitor: ${coord.full_name}<br>
-                Date: ${coord.tanggal}
+                Date: ${coord.tanggal} <br>
+                Store Area: ${coord.area_name || 'N/A'}
                 ${coord.is_top_5 ? `<br><strong style="color: ${color}">Rank #${rank} Most Visited Store!</strong>` : ''}
             `);
             
@@ -214,6 +216,78 @@ function updateInfoPanel(data) {
         this.textContent = showingTop5 ? 'Show All Points' : 'Show Top 5 Only';
         loadMapData();
     });
+    
+    // Move area filter logic here and modify
+    const filterContainer = document.querySelector('.filter-container');
+    const areaFilter = document.getElementById('area-filter');
+    
+    if (filterContainer && areaFilter && data.areas) {
+        // Show the filter container
+        filterContainer.style.display = 'block';
+        
+        // Populate dropdown options
+        areaFilter.innerHTML = `
+            <option value="">All Areas</option>
+            ${data.areas.map(area => `
+                <option value="${area.area_id}">${area.area_name}</option>
+            `).join('')}
+        `;
+        console.log('Areas loaded:', data.areas);
+
+        // Add change event listener
+        areaFilter.addEventListener('change', function() {
+            const selectedAreaId = this.value;
+            const filteredCoordinates = selectedAreaId ? 
+                data.coordinates.filter(coord => coord.area_id === selectedAreaId) :
+                data.coordinates;
+
+            // Get selected area name
+            const selectedArea = selectedAreaId ? 
+                data.areas.find(area => area.area_id === selectedAreaId) :
+                null;
+
+            displayPoints({
+                ...data,
+                coordinates: filteredCoordinates
+            }, showingTop5);
+
+            // Calculate stats for selected area
+            const areaStats = calculateAreaStats(filteredCoordinates);
+            
+            // Update stats display with area information
+            const statsSection = document.querySelector('.stats-section');
+            if (statsSection) {
+                statsSection.innerHTML = `
+                    ${selectedArea ? `
+                        <div class="area-info" style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                            <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📍 Area Information</h4>
+                            <p style="margin: 5px 0;"><strong>Selected Area:</strong> ${selectedArea.area_name}</p>
+                        </div>
+                    ` : ''}
+                    <div class="date-range" style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                        <p style="margin: 0;"><strong>Period: (YYYY/MM/DD)</strong></p>
+                        <p style="margin: 5px 0; font-size: 1.1em;">
+                            ${data.stats.date_range.start} to ${data.stats.date_range.end}
+                        </p>
+                    </div>
+                    <p><strong>Total Points:</strong> ${areaStats.total_points}</p>
+                    <p><strong>Total Stores:</strong> ${areaStats.total_stores}</p>
+                    <p><strong>Total Visitors:</strong> ${areaStats.total_visitors}</p>
+                `;
+            }
+        });
+    }
+}
+
+function calculateAreaStats(coordinates) {
+    const uniqueStores = new Set(coordinates.map(c => c.store_id));
+    const uniqueVisitors = new Set(coordinates.map(c => c.full_name));
+    
+    return {
+        total_points: coordinates.length,
+        total_stores: uniqueStores.size,
+        total_visitors: uniqueVisitors.size
+    };
 }
 
 // File input handling function
@@ -349,4 +423,10 @@ function showEmptyAnalysisPanel() {
     `;
     
     infoPanel.innerHTML = headerHtml + contentHtml;
+    
+    // Hide the area filter when clearing data
+    const filterContainer = document.querySelector('.filter-container');
+    if (filterContainer) {
+        filterContainer.style.display = 'none';
+    }
 }

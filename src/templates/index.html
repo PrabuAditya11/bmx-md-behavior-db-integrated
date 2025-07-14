@@ -41,8 +41,16 @@
                 </form>
             </div>
             
+            <!-- Keep only this one in the header -->
+            <div class="filter-container" style="display: none;">
+                <label for="area-filter" style="color: white; margin-right: 10px;">Filter by Area:</label>
+                <select id="area-filter" class="form-select">
+                    <option value="">All Areas</option>
+                </select>
+            </div>
+
             <div class="required-info">
-                <strong>Required columns:</strong> longitude, latitude, store_name, store_id, full_name, tanggal
+                <strong>Required columns:</strong> longitude, latitude, store_name, store_id, full_name, tanggal, area_name, area_id
             </div>
         </div>
     </div>
@@ -55,12 +63,10 @@
     <!-- Analysis Panel at Bottom -->
     <div id="info-panel" class="analysis-panel">
         <div class="analysis-header">
-            <h3 style="margin: 0; color: #2c3e50;">📊 Analysis Dashboard</h3>
+            <h3 style="margin: 0; color: #2c3e50;">📊 Analysis Statistics</h3>
         </div>
         <div class="analysis-content">
-            <div class="stats-section">
-                <p>Upload a CSV file to start the analysis and visualize store visit patterns on the map.</p>
-            </div>
+            <div class="stats-section"></div>
         </div>
     </div>
 

@@ -305,3 +305,73 @@ button[type="submit"]:hover {
 #remove-file:hover {
     background: #c82333;
 }
+
+.area-filter {
+    margin-bottom: 15px;
+}
+
+#area-filter {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: white;
+}
+
+.area-filter-container {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.filter-container {
+    display: flex;
+    align-items: center;
+    min-width: 200px;
+    margin: 0 15px;
+}
+
+.filter-container label {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.form-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgb(0, 0, 0);
+    font-size: 14px;
+}
+
+.form-select option {
+    background-color: #2c3e50;
+    color: white;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.area-info {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+    border-left: 4px solid #4ECDC4;
+}
+
+.area-info h4 {
+    color: #2c3e50;
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+
+.area-info p {
+    margin: 5px 0;
+    color: #495057;
+}

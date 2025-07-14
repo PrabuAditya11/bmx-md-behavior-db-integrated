@@ -12,16 +12,22 @@ class MapProcessor:
         try:
             # Read CSV with pandas
             df = pd.read_csv(file)
-            required_columns = ['longitude', 'latitude', 'store_name', 'store_id', 'full_name', 'tanggal']
             
-            # Validate columns
-            if not all(col in df.columns for col in required_columns):
-                return {'success': False, 'error': 'Missing required columns'}
+            # Ensure numeric types for coordinates
+            df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
+            df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
+            
+            # Remove rows with invalid coordinates
+            df = df.dropna(subset=['longitude', 'latitude'])
             
             # Convert tanggal to datetime and get date range
             df['tanggal'] = pd.to_datetime(df['tanggal'])
             start_date = df['tanggal'].min().strftime('%Y-%m-%d')
             end_date = df['tanggal'].max().strftime('%Y-%m-%d')
+            
+            # Process areas - ensure area_id is string for consistency
+            df['area_id'] = df['area_id'].astype(str)
+            areas = df[['area_id', 'area_name']].drop_duplicates().to_dict('records')
             
             # Process top 5 stores
             top_5_stores = df['store_id'].value_counts().head(5)
@@ -30,26 +36,41 @@ class MapProcessor:
             for i, (store_id, visit_count) in enumerate(top_5_stores.items()):
                 store_data = df[df['store_id'] == store_id].iloc[0]
                 top_5_info.append({
-                    'store_id': store_id,
-                    'store_name': store_data['store_name'],
+                    'store_id': str(store_id),
+                    'store_name': str(store_data['store_name']),
                     'visit_count': int(visit_count),
-                    'color': self.colors[i]
+                    'color': self.colors[i],
+                    'latitude': float(store_data['latitude']),
+                    'longitude': float(store_data['longitude']),
+                    'area_name': str(store_data['area_name']),
+                    'area_id': str(store_data['area_id'])
                 })
             
-            # Convert to list of dictionaries with formatted dates
-            coordinates = df.assign(
-                tanggal=df['tanggal'].dt.strftime('%Y-%m-%d'),
-                is_top_5=df['store_id'].isin(top_5_stores.index)
-            ).to_dict('records')
+            # Convert to list of dictionaries with explicit type conversion
+            coordinates = []
+            for _, row in df.iterrows():
+                coordinates.append({
+                    'longitude': float(row['longitude']),
+                    'latitude': float(row['latitude']),
+                    'store_name': str(row['store_name']),
+                    'store_id': str(row['store_id']),
+                    'full_name': str(row['full_name']),
+                    'tanggal': row['tanggal'].strftime('%Y-%m-%d'),
+                    'area_name': str(row['area_name']),
+                    'area_id': str(row['area_id']),
+                    'is_top_5': row['store_id'] in top_5_stores.index
+                })
             
             # Save processed data
             self.processed_data = {
                 'success': True,
                 'coordinates': coordinates,
                 'top_5_stores': top_5_info,
+                'areas': areas,
                 'stats': {
                     'total_points': len(coordinates),
                     'total_stores': len(set(c['store_id'] for c in coordinates)),
+                    'total_areas': len(areas),
                     'date_range': {
                         'start': start_date,
                         'end': end_date
