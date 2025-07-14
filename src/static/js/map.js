@@ -193,21 +193,28 @@ function updateInfoPanel(data) {
     
     const contentHtml = `
         <div class="analysis-content">
-            <div class="date-range" style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
-                <p style="margin: 0;"><strong>Period: (YYYY/MM/DD) </strong></p>
-                <p style="margin: 5px 0; font-size: 1.1em;">
-                    ${data.stats.date_range.start} to ${data.stats.date_range.end}
-                </p>
+            <div class="global-stats">
+                <div class="date-range" style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                    <p style="margin: 0;"><strong>Period: (YYYY/MM/DD)</strong></p>
+                    <p style="margin: 5px 0; font-size: 1.1em;">
+                        ${data.stats.date_range.start} to ${data.stats.date_range.end}
+                    </p>
+                </div>
+                <button id="toggle-top5" class="btn btn-primary" style="margin-bottom: 10px;">
+                    ${showingTop5 ? 'Show All Points' : 'Show Top 5 Only'}
+                </button>
+                <p><strong>Total Points:</strong> ${data.stats.total_points}</p>
+                <p><strong>Total Stores:</strong> ${data.stats.total_stores}</p>
+                ${top5Html}
             </div>
-            <button id="toggle-top5" class="btn btn-primary" style="margin-bottom: 10px;">
-                ${showingTop5 ? 'Show All Points' : 'Show Top 5 Only'}
-            </button>
-            <p><strong>Total Points:</strong> ${data.stats.total_points}</p>
-            <p><strong>Total Stores:</strong> ${data.stats.total_stores}</p>
-            ${top5Html}
+
+            <!-- ✅ Separated container for filtered area stats -->
+            <div class="filtered-stats">
+                <div class="stats-section"></div>
+            </div>
         </div>
     `;
-    
+        
     infoPanel.innerHTML = headerHtml + contentHtml;
     
     // Add toggle button handler
@@ -246,6 +253,8 @@ function updateInfoPanel(data) {
                 data.areas.find(area => area.area_id === selectedAreaId) :
                 null;
 
+            console.log("Updating stats section for area:", selectedArea?.area_name);
+
             displayPoints({
                 ...data,
                 coordinates: filteredCoordinates
@@ -253,6 +262,8 @@ function updateInfoPanel(data) {
 
             // Calculate stats for selected area
             const areaStats = calculateAreaStats(filteredCoordinates);
+
+            console.log("data.stats:", areaStats.total_points);
             
             // Update stats display with area information
             const statsSection = document.querySelector('.stats-section');
@@ -264,12 +275,6 @@ function updateInfoPanel(data) {
                             <p style="margin: 5px 0;"><strong>Selected Area:</strong> ${selectedArea.area_name}</p>
                         </div>
                     ` : ''}
-                    <div class="date-range" style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
-                        <p style="margin: 0;"><strong>Period: (YYYY/MM/DD)</strong></p>
-                        <p style="margin: 5px 0; font-size: 1.1em;">
-                            ${data.stats.date_range.start} to ${data.stats.date_range.end}
-                        </p>
-                    </div>
                     <p><strong>Total Points:</strong> ${areaStats.total_points}</p>
                     <p><strong>Total Stores:</strong> ${areaStats.total_stores}</p>
                     <p><strong>Total Visitors:</strong> ${areaStats.total_visitors}</p>

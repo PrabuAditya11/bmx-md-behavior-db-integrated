@@ -2,9 +2,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    min-height: 100vh;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
+    background: #f0f0f0;
 }
 
 /* Header */
@@ -102,7 +100,7 @@ body {
 /* Map Container */
 .map-container {
     position: relative;
-    height: calc(100vh - 250px);
+    height: 500px;
     min-height: 400px;
     padding: 20px;
     background: #f8f9fa;
@@ -119,12 +117,11 @@ body {
 .analysis-panel {
     background: white;
     border-top: 1px solid #dee2e6;
-    height: auto;
-    max-height: 250px;
-    overflow: hidden;
-    margin: 0 20px 20px 20px;
+    padding: 20px;
+    margin: 20px;
     border-radius: 8px;
     box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
+    max-width: 100%;
 }
 
 .analysis-header {
@@ -138,8 +135,6 @@ body {
 
 .analysis-content {
     padding: 0 20px 20px 20px;
-    max-height: 190px;
-    overflow-y: auto;
     margin-bottom: 10px;
 }
 
@@ -253,19 +248,11 @@ button[type="submit"]:hover {
 }
 
 /* Leaflet Controls */
-.leaflet-control-zoom {
-    z-index: 500 !important;
-}
 
-.leaflet-control-container {
-    z-index: 500 !important;
-}
-
-.leaflet-top {
-    z-index: 500 !important;
-}
-
-.leaflet-left {
+.leaflet-top,
+.leaflet-bottom,
+.leaflet-left,
+.leaflet-right {
     z-index: 500 !important;
 }
 
@@ -372,6 +359,25 @@ button[type="submit"]:hover {
 }
 
 .area-info p {
+    margin: 5px 0;
+    color: #495057;
+}
+
+.global-stats, .filtered-stats {
+    background: #ffffff;
+    border: 1px solid #dee2e6;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.filtered-stats .area-info h4 {
+    color: #2c3e50;
+    margin-top: 0;
+}
+
+.filtered-stats .area-info p {
     margin: 5px 0;
     color: #495057;
 }
