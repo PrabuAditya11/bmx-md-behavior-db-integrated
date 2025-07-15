@@ -268,17 +268,21 @@ function updateInfoPanel(data) {
             // Update stats display with area information
             const statsSection = document.querySelector('.stats-section');
             if (statsSection) {
-                statsSection.innerHTML = `
-                    ${selectedArea ? `
+                // Only render area info if a specific area is selected
+                if (selectedArea) {
+                    statsSection.innerHTML = `
                         <div class="area-info" style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
                             <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📍 Area Information</h4>
                             <p style="margin: 5px 0;"><strong>Selected Area:</strong> ${selectedArea.area_name}</p>
+                            <p><strong>Total Points:</strong> ${areaStats.total_points}</p>
+                            <p><strong>Total Stores:</strong> ${areaStats.total_stores}</p>
+                            <p><strong>Total Visitors:</strong> ${areaStats.total_visitors}</p>
                         </div>
-                    ` : ''}
-                    <p><strong>Total Points:</strong> ${areaStats.total_points}</p>
-                    <p><strong>Total Stores:</strong> ${areaStats.total_stores}</p>
-                    <p><strong>Total Visitors:</strong> ${areaStats.total_visitors}</p>
-                `;
+                    `;
+                } else {
+                    // Clear the stats section if "All Areas" is selected
+                    statsSection.innerHTML = '';
+                }
             }
         });
     }
