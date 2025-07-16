@@ -359,6 +359,8 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(uploadForm);
+            const loadingOverlay = document.getElementById('loading-overlay');
+            if (loadingOverlay) loadingOverlay.style.display = 'flex';
             
             fetch('/api/upload', {
                 method: 'POST',
@@ -375,6 +377,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .catch(error => {
                 console.error('Error:', error);
                 alert(error.message);
+            })
+            .finally(() => {
+                if (loadingOverlay) loadingOverlay.style.display = 'none';
             });
         });
     }

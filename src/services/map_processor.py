@@ -1,6 +1,6 @@
 import pandas as pd
-import json
 import os
+import orjson  # install with: pip install orjson
 
 class MapProcessor:
     def __init__(self):
@@ -10,66 +10,75 @@ class MapProcessor:
 
     def process_file(self, file):
         try:
-            # Read CSV with pandas
-            df = pd.read_csv(file)
-            
-            # Ensure numeric types for coordinates
+            # Load only needed columns
+            usecols = ['longitude', 'latitude', 'store_name', 'store_id',
+                       'full_name', 'tanggal', 'area_name', 'area_id']
+            df = pd.read_csv(file, usecols=usecols)
+
+            # Coordinate cleanup
             df['longitude'] = pd.to_numeric(df['longitude'], errors='coerce')
             df['latitude'] = pd.to_numeric(df['latitude'], errors='coerce')
-            
-            # Remove rows with invalid coordinates
-            df = df.dropna(subset=['longitude', 'latitude'])
-            
-            # Convert tanggal to datetime and get date range
+            df.dropna(subset=['longitude', 'latitude'], inplace=True)
+
+            # Efficient types
+            df['store_id'] = df['store_id'].astype('category')
+            df['area_id'] = df['area_id'].astype('category')
             df['tanggal'] = pd.to_datetime(df['tanggal'])
+
+            # Date range
             start_date = df['tanggal'].min().strftime('%Y-%m-%d')
             end_date = df['tanggal'].max().strftime('%Y-%m-%d')
-            
-            # Process areas - ensure area_id is string for consistency
+
+            # Areas (keep both id & name)
+            if 'area_name' not in df.columns:
+                df['area_name'] = 'Unknown'
+            else:
+                df['area_name'] = df['area_name'].fillna('Unknown')
+
+            # Remove duplicates and cast to string for safety
             df['area_id'] = df['area_id'].astype(str)
+            df['area_name'] = df['area_name'].astype(str)
+
             areas = df[['area_id', 'area_name']].drop_duplicates().to_dict('records')
-            
-            # Process top 5 stores
-            top_5_stores = df['store_id'].value_counts().head(5)
-            top_5_info = []
-            
-            for i, (store_id, visit_count) in enumerate(top_5_stores.items()):
+
+            # Top 5 store info
+            top_5_counts = df['store_id'].value_counts().head(5)
+            top_5_ids = top_5_counts.index.tolist()
+
+            top_5_map = {}
+            for i, store_id in enumerate(top_5_ids):
                 store_data = df[df['store_id'] == store_id].iloc[0]
-                top_5_info.append({
+                top_5_map[store_id] = {
                     'store_id': str(store_id),
                     'store_name': str(store_data['store_name']),
-                    'visit_count': int(visit_count),
+                    'visit_count': int(top_5_counts[store_id]),
                     'color': self.colors[i],
                     'latitude': float(store_data['latitude']),
                     'longitude': float(store_data['longitude']),
                     'area_name': str(store_data['area_name']),
                     'area_id': str(store_data['area_id'])
-                })
-            
-            # Convert to list of dictionaries with explicit type conversion
-            coordinates = []
-            for _, row in df.iterrows():
-                coordinates.append({
-                    'longitude': float(row['longitude']),
-                    'latitude': float(row['latitude']),
-                    'store_name': str(row['store_name']),
-                    'store_id': str(row['store_id']),
-                    'full_name': str(row['full_name']),
-                    'tanggal': row['tanggal'].strftime('%Y-%m-%d'),
-                    'area_name': str(row['area_name']),
-                    'area_id': str(row['area_id']),
-                    'is_top_5': row['store_id'] in top_5_stores.index
-                })
-            
-            # Save processed data
+                }
+
+            # is_top_5 as a column
+            df['is_top_5'] = df['store_id'].isin(top_5_ids)
+
+            # Format tanggal as string
+            df['tanggal'] = df['tanggal'].dt.strftime('%Y-%m-%d')
+
+            # Make sure all values are strings for JSON compatibility
+            df['store_id'] = df['store_id'].astype(str)
+            df['area_id'] = df['area_id'].astype(str)
+
+            coordinates = df.to_dict('records')
+
             self.processed_data = {
                 'success': True,
                 'coordinates': coordinates,
-                'top_5_stores': top_5_info,
+                'top_5_stores': list(top_5_map.values()),
                 'areas': areas,
                 'stats': {
-                    'total_points': len(coordinates),
-                    'total_stores': len(set(c['store_id'] for c in coordinates)),
+                    'total_points': len(df),
+                    'total_stores': df['store_id'].nunique(),
                     'total_areas': len(areas),
                     'date_range': {
                         'start': start_date,
@@ -77,10 +86,10 @@ class MapProcessor:
                     }
                 }
             }
-            
+
             self._save_to_file()
             return {'success': True}
-            
+
         except Exception as e:
             print("Error processing file:", str(e))
             return {'success': False, 'error': str(e)}
@@ -88,10 +97,10 @@ class MapProcessor:
     def get_processed_data(self):
         if not self.processed_data:
             if os.path.exists(self.data_file):
-                with open(self.data_file, 'r') as f:
-                    self.processed_data = json.load(f)
+                with open(self.data_file, 'rb') as f:
+                    self.processed_data = orjson.loads(f.read())
             else:
-                return {'success': False, 'error': 'No data available'}
+                return {'success': False, 'error': 'data nya belum ada'}
         return self.processed_data
 
     def clear_data(self):
@@ -101,5 +110,5 @@ class MapProcessor:
 
     def _save_to_file(self):
         os.makedirs(os.path.dirname(self.data_file), exist_ok=True)
-        with open(self.data_file, 'w') as f:
-            json.dump(self.processed_data, f)
+        with open(self.data_file, 'wb') as f:
+            f.write(orjson.dumps(self.processed_data))
