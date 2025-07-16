@@ -25,32 +25,24 @@
     <div class="header">
         <h1>🗺️ Store Visit Map Analysis</h1>
         <div class="control-panel">
-            <div class="file-actions-group">
-                <form id="upload-form" enctype="multipart/form-data">
-                    <div class="file-upload-container">
-                        <div class="file-input-wrapper">
-                            <input type="file" id="csv-file" name="csv_file" accept=".csv" required>
-                            <label for="csv-file" class="file-input-label">Choose CSV File</label>
-                        </div>
-                        <div id="file-name-display" class="file-name-display" style="display: none;"></div>
-                        <div class="file-actions">
-                            <button type="submit" id="upload-btn" style="display: none;">Upload CSV</button>
-                            <button type="button" id="remove-file" style="display: none;">Clear Data</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Keep only this one in the header -->
-            <div class="filter-container" style="display: none;">
-                <label for="area-filter" style="color: white; margin-right: 10px;">Filter by Area:</label>
-                <select id="area-filter" class="form-select">
-                    <option value="">All Areas</option>
-                </select>
-            </div>
+            <div class="filter-panel">
+                <div class="filter-group">
+                    <label for="start-date">Date Range:</label>
+                    <input type="date" id="start-date">
+                    <input type="date" id="end-date">
+                </div>
 
-            <div class="required-info">
-                <strong>Required columns:</strong> longitude, latitude, store_name, store_id, full_name, tanggal, area_name, area_id
+                <div class="filter-group">
+                    <label for="area-filter">Area:</label>
+                    <select id="area-filter"></select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="account-filter">Account:</label>
+                    <select id="account-filter"></select>
+                </div>
+
+                <button id="apply-filters">Apply Filters</button>
             </div>
         </div>
     </div>
@@ -65,7 +57,6 @@
         <div class="analysis-header">       
         </div>
         <div class="analysis-content">
-            <div class="stats-section"></div>
         </div>
     </div>
 
@@ -83,6 +74,11 @@
     <div id="loading-overlay" style="display: none;">
         <div class="loading-spinner"></div>
         <p style="color: white; font-weight: bold;">Processing file, please wait...</p>
+    </div>
+
+    <div id="no-data-overlay" style="display: none;">
+        <div class="no-data-icon">⚠️</div>
+        <p class="no-data-text">No data found for the selected filters.<br>Please try a different date range, area, or account.</p>
     </div>
 </body>
 </html>

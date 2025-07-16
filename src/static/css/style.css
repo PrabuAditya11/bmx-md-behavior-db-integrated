@@ -7,30 +7,30 @@ body {
 
 /* Header */
 .header {
-    background: #2c3e50;
-    color: white;
-    padding: 15px 20px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    background: linear-gradient(90deg, #2c3e50, #34495e);
+    color: #fff;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     position: sticky;
     top: 0;
     z-index: 1000;
 }
 
 .header h1 {
-    margin: 0 0 10px 0;
-    font-size: 24px;
+    margin: 0 0 15px 0;
+    font-size: 26px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
 }
 
 /* Control Panel */
 .control-panel {
     display: flex;
-    align-items: center;
-    justify-content: space-between; /* Add this to separate items */
-    gap: 15px;
     flex-wrap: wrap;
-    max-width: 100%;
-    overflow-x: auto;
-    padding: 10px 0;
+    gap: 20px;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 10px;
 }
 
 /* File Upload Styling */
@@ -96,10 +96,51 @@ body {
 }
 
 /* Update the file actions container */
-.file-actions-group {
+.filter-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: center;
+}
+
+.filter-group {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 8px;
+    min-width: 180px;
+}
+
+.filter-group label {
+    white-space: nowrap;
+    font-weight: 500;
+    color: #ecf0f1;
+}
+
+.filter-group select,
+.filter-group input[type="date"] {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 130px;
+    background: white;
+}
+
+.filter-panel label {
+    font-size: 14px;
+    font-weight: 500;
+    margin-right: 5px;
+    color: #ecf0f1;
+}
+
+.filter-panel input[type="date"],
+.filter-panel select {
+    padding: 6px 10px;
+    font-size: 14px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    background: #fff;
+    min-width: 130px;
 }
 
 /* Map Container */
@@ -116,6 +157,55 @@ body {
     height: 100%;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.no-data-message {
+    display: none; 
+    position: absolute; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%, -50%); 
+    background: rgba(255,255,255,0.95); 
+    padding: 20px 30px; 
+    border-radius: 8px; 
+    box-shadow: 0 0 8px rgba(0,0,0,0.2); 
+    text-align: center; 
+    z-index: 999;
+
+}
+
+#no-data-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.no-data-icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+    color: #ffc107; /* Warning yellow */
+}
+
+.no-data-text {
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+    line-height: 1.5;
+    max-width: 90%;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* Analysis Panel */
@@ -214,23 +304,6 @@ button[type="submit"]:hover {
     margin-bottom: 10px;
 }
 
-/* Required columns info */
-.required-info {
-    background: #3d5166; /* Darker shade of header color */
-    border: 1px solid #445669;
-    border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 12px;
-    color: #e9ecef;
-    max-width: 300px;
-    margin: 0; /* Remove margin-top */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.required-info ul {
-    margin: 5px 0;
-    padding-left: 20px;
-}
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
@@ -291,6 +364,21 @@ button[type="submit"]:hover {
 
     #file-name-display {
         max-width: 100%;
+    }
+
+    .filter-panel {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .filter-group {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filter-group label {
+        margin-bottom: 4px;
     }
 }
 
@@ -419,4 +507,23 @@ button[type="submit"]:hover {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+#apply-filters {
+    background-color: #1abc9c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+#apply-filters:hover {
+    background-color: #16a085;
+}
+
+button, select, input[type="date"] {
+    transition: all 0.2s ease-in-out;
 }

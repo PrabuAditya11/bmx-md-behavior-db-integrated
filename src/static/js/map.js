@@ -3,6 +3,14 @@ let markers = [];
 let markerClusterGroup = null;
 let showingTop5 = false;
 
+const TOP5_COLORS = [
+    '#FF0000', // Bright Red
+    '#00FF00', // Bright Green
+    '#0000FF', // Bright Blue
+    '#FF00FF', // Bright Magenta
+    '#FF8000'  // Bright Orange
+];
+
 function initMap() {
     map = L.map('map').setView([-6.2088, 106.8456], 10);
     
@@ -14,63 +22,71 @@ function initMap() {
         subdomains: 'abcd',
     }).addTo(map);
     
+    setupDateValidation();
     loadMapData();
+}
+
+function setupDateValidation() {
+    const startInput = document.getElementById('start-date');
+    const endInput = document.getElementById('end-date');
+
+    if (!startInput || !endInput) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    endInput.setAttribute('max', today);
+
+    startInput.addEventListener('change', function () {
+        if (endInput.value && new Date(this.value) > new Date(endInput.value)) {
+            endInput.value = this.value;
+        }
+        endInput.min = this.value;
+    });
+
+    endInput.addEventListener('change', function () {
+        if (startInput.value && new Date(this.value) < new Date(startInput.value)) {
+            this.value = startInput.value;
+        }
+    });
 }
 
 function clearMap() {
     if (!map) return;
-    
+
     if (markerClusterGroup) {
         map.removeLayer(markerClusterGroup);
         markerClusterGroup = null;
     }
-    
+
     markers.forEach(marker => {
         if (map.hasLayer(marker)) {
             map.removeLayer(marker);
         }
     });
-    
+
     markers = [];
     map.setView([-6.2088, 106.8456], 10);
 }
 
 function getMarkerColor(coord, top5Stores) {
     if (coord.is_top_5) {
-        const storeInfo = top5Stores.find(s => s.store_id === coord.store_id);
-        if (storeInfo) {
-            // Define high contrast colors for top 5 stores
-            const contrastColors = [
-                '#FF0000', // Bright Red
-                '#00FF00', // Bright Green  
-                '#0000FF', // Bright Blue
-                '#FF00FF', // Bright Magenta
-                '#FF8000'  // Bright Orange
-            ];
-            const storeIndex = top5Stores.indexOf(storeInfo);
-            return contrastColors[storeIndex] || '#FF0000';
-        }
-        return '#FF0000'; // Fallback red for top 5
+        const storeIndex = top5Stores.findIndex(s => s.store_id === coord.store_id);
+        return TOP5_COLORS[storeIndex] || '#FF0000';
     }
-    return '#3388ff'; // Default blue for regular points
+    return '#3388ff';
 }
-
 function displayPoints(data, showOnlyTop5 = false) {
     clearMap();
 
-    // Helper function to get store rank
     function getStoreRank(storeId, top5Stores) {
         const index = top5Stores.findIndex(s => s.store_id === storeId);
         return index !== -1 ? index + 1 : null;
     }
 
-    const coordinates = showOnlyTop5 
+    const coordinates = showOnlyTop5
         ? data.coordinates.filter(coord => coord.is_top_5)
         : data.coordinates;
 
-    // Implement clustering only if more than 20000 points
     if (coordinates.length > 20000) {
-        console.log(`Using clustering for ${coordinates.length} points`);
         markerClusterGroup = L.markerClusterGroup({
             chunkedLoading: true,
             maxClusterRadius: 50,
@@ -78,7 +94,6 @@ function displayPoints(data, showOnlyTop5 = false) {
             showCoverageOnHover: false
         });
 
-        // Add points in batches to prevent UI blocking
         const batchSize = 1000;
         for (let i = 0; i < coordinates.length; i += batchSize) {
             setTimeout(() => {
@@ -87,15 +102,14 @@ function displayPoints(data, showOnlyTop5 = false) {
                     const color = getMarkerColor(coord, data.top_5_stores);
                     const marker = L.circleMarker([coord.latitude, coord.longitude], {
                         radius: coord.is_top_5 ? 6 : 4,
-                        color: coord.is_top_5 ? '#000000' : color, // Black outline for top 5
-                        weight: coord.is_top_5 ? 2 : 1, // Thicker outline for top 5
+                        color: coord.is_top_5 ? '#000000' : color,
+                        weight: coord.is_top_5 ? 2 : 1,
                         fillColor: color,
                         fillOpacity: 0.7
                     });
-                    
-                    // Get rank if it's a top 5 store
+
                     const rank = coord.is_top_5 ? getStoreRank(coord.store_id, data.top_5_stores) : null;
-                    
+
                     marker.bindPopup(`
                         <b>${coord.store_name}</b><br>
                         Store_ID: ${coord.store_id}<br>
@@ -104,11 +118,10 @@ function displayPoints(data, showOnlyTop5 = false) {
                         Store Area: ${coord.area_name || 'N/A'}
                         ${coord.is_top_5 ? `<br><strong style="color: ${color}">Rank #${rank} Most Visited Store!</strong>` : ''}
                     `);
-                    
+
                     markerClusterGroup.addLayer(marker);
                 });
-                
-                // Fit bounds after last batch
+
                 if (i + batchSize >= coordinates.length) {
                     map.addLayer(markerClusterGroup);
                     map.fitBounds(markerClusterGroup.getBounds().pad(0.1));
@@ -116,20 +129,18 @@ function displayPoints(data, showOnlyTop5 = false) {
             }, 0);
         }
     } else {
-        // Regular display for smaller datasets
         coordinates.forEach(coord => {
             const color = getMarkerColor(coord, data.top_5_stores);
             const marker = L.circleMarker([coord.latitude, coord.longitude], {
                 radius: coord.is_top_5 ? 6 : 4,
-                color: coord.is_top_5 ? '#000000' : color, // Black outline for top 5
-                weight: coord.is_top_5 ? 0.5 : 0.2, // Thicker outline for top 5
+                color: coord.is_top_5 ? '#000000' : color,
+                weight: coord.is_top_5 ? 0.5 : 0.2,
                 fillColor: color,
                 fillOpacity: 0.7
             }).addTo(map);
-            
-            // Get rank if it's a top 5 store
+
             const rank = coord.is_top_5 ? getStoreRank(coord.store_id, data.top_5_stores) : null;
-            
+
             marker.bindPopup(`
                 <b>${coord.store_name}</b><br>
                 Store_ID: ${coord.store_id}<br>
@@ -138,7 +149,7 @@ function displayPoints(data, showOnlyTop5 = false) {
                 Store Area: ${coord.area_name || 'N/A'}
                 ${coord.is_top_5 ? `<br><strong style="color: ${color}">Rank #${rank} Most Visited Store!</strong>` : ''}
             `);
-            
+
             markers.push(marker);
         });
 
@@ -150,33 +161,62 @@ function displayPoints(data, showOnlyTop5 = false) {
 }
 
 function loadMapData() {
-    fetch('/api/data')
+    const start = document.getElementById('start-date').value;
+    const end = document.getElementById('end-date').value;
+    const area = document.getElementById('area-filter').value;
+    const account = document.getElementById('account-filter').value;
+
+    const url = `/api/data?start_date=${start}&end_date=${end}&area_id=${area}&account_id=${account}`;
+
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
+    fetch(url)
         .then(response => response.json())
         .then(data => {
-            if (!data.success) {
-                throw new Error(data.error || 'Failed to load data');
+            const noDataOverlay = document.getElementById('no-data-overlay');
+
+            if (!data.success) throw new Error(data.error);
+
+            if (!data.coordinates || data.coordinates.length === 0) {
+                clearMap();
+                showEmptyAnalysisPanel();
+
+                if (noDataOverlay) {
+                    noDataOverlay.style.display = 'flex';
+                    setTimeout(() => {
+                        noDataOverlay.style.display = 'none';
+                    }, 2500); // Hide after 2.5 seconds
+                }
+
+                return;
+            } else {
+                if (noDataOverlay) noDataOverlay.style.display = 'none';
             }
-            
+
             displayPoints(data, showingTop5);
             updateInfoPanel(data);
         })
         .catch(error => {
             console.error('Error:', error);
             alert(error.message);
+        })
+        .finally(() => {
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
         });
 }
 
 function updateInfoPanel(data) {
     const infoPanel = document.getElementById('info-panel');
     if (!infoPanel) return;
-    
+
     let top5Html = '';
     if (data.top_5_stores && data.top_5_stores.length > 0) {
         top5Html = `
             <div class="top-5-section" style="margin-top: 15px;">
                 <h4>Top 5 Most Visited Stores</h4>
                 ${data.top_5_stores.map((store, index) => `
-                    <div style="margin: 5px 0; padding: 5px; border-left: 3px solid ${store.color};">
+                    <div style="margin: 5px 0; padding: 5px; border-left: 3px solid ${TOP5_COLORS[index]};">
                         #${index + 1} ${store.store_name}<br>
                         <small>${store.visit_count} visits</small>
                     </div>
@@ -184,13 +224,13 @@ function updateInfoPanel(data) {
             </div>
         `;
     }
-    
+
     const headerHtml = `
         <div class="analysis-header">
             <h3 style="margin: 0; color: #2c3e50;">📊 Analysis Statistics</h3>
         </div>
     `;
-    
+
     const contentHtml = `
         <div class="analysis-content">
             <div class="global-stats">
@@ -207,96 +247,16 @@ function updateInfoPanel(data) {
                 <p><strong>Total Stores:</strong> ${data.stats.total_stores}</p>
                 ${top5Html}
             </div>
-
-            <!-- ✅ Separated container for filtered area stats -->
-            <div class="filtered-stats">
-                <div class="stats-section"></div>
-            </div>
         </div>
     `;
-        
+
     infoPanel.innerHTML = headerHtml + contentHtml;
-    
-    // Add toggle button handler
+
     document.getElementById('toggle-top5').addEventListener('click', function() {
         showingTop5 = !showingTop5;
         this.textContent = showingTop5 ? 'Show All Points' : 'Show Top 5 Only';
         loadMapData();
     });
-    
-    // Move area filter logic here and modify
-    const filterContainer = document.querySelector('.filter-container');
-    const areaFilter = document.getElementById('area-filter');
-    
-    if (filterContainer && areaFilter && data.areas) {
-        // Show the filter container
-        filterContainer.style.display = 'block';
-        
-        // Populate dropdown options
-        areaFilter.innerHTML = `
-            <option value="">All Areas</option>
-            ${data.areas.map(area => `
-                <option value="${area.area_id}">${area.area_name}</option>
-            `).join('')}
-        `;
-        console.log('Areas loaded:', data.areas);
-
-        // Add change event listener
-        areaFilter.addEventListener('change', function() {
-            const selectedAreaId = this.value;
-            const filteredCoordinates = selectedAreaId ? 
-                data.coordinates.filter(coord => coord.area_id === selectedAreaId) :
-                data.coordinates;
-
-            // Get selected area name
-            const selectedArea = selectedAreaId ? 
-                data.areas.find(area => area.area_id === selectedAreaId) :
-                null;
-
-            console.log("Updating stats section for area:", selectedArea?.area_name);
-
-            displayPoints({
-                ...data,
-                coordinates: filteredCoordinates
-            }, showingTop5);
-
-            // Calculate stats for selected area
-            const areaStats = calculateAreaStats(filteredCoordinates);
-
-            console.log("data.stats:", areaStats.total_points);
-            
-            // Update stats display with area information
-            const statsSection = document.querySelector('.stats-section');
-            if (statsSection) {
-                // Only render area info if a specific area is selected
-                if (selectedArea) {
-                    statsSection.innerHTML = `
-                        <div class="area-info" style="background: #f8f9fa; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
-                            <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📍 Area Information</h4>
-                            <p style="margin: 5px 0;"><strong>Selected Area:</strong> ${selectedArea.area_name}</p>
-                            <p><strong>Total Points:</strong> ${areaStats.total_points}</p>
-                            <p><strong>Total Stores:</strong> ${areaStats.total_stores}</p>
-                            <p><strong>Total Visitors:</strong> ${areaStats.total_visitors}</p>
-                        </div>
-                    `;
-                } else {
-                    // Clear the stats section if "All Areas" is selected
-                    statsSection.innerHTML = '';
-                }
-            }
-        });
-    }
-}
-
-function calculateAreaStats(coordinates) {
-    const uniqueStores = new Set(coordinates.map(c => c.store_id));
-    const uniqueVisitors = new Set(coordinates.map(c => c.full_name));
-    
-    return {
-        total_points: coordinates.length,
-        total_stores: uniqueStores.size,
-        total_visitors: uniqueVisitors.size
-    };
 }
 
 // File input handling function
@@ -352,57 +312,33 @@ function setupFileHandling() {
 document.addEventListener('DOMContentLoaded', function() {
     initMap();
     setupFileHandling();
-    
-    // Handle file upload
-    const uploadForm = document.getElementById('upload-form');
-    if (uploadForm) {
-        uploadForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(uploadForm);
-            const loadingOverlay = document.getElementById('loading-overlay');
-            if (loadingOverlay) loadingOverlay.style.display = 'flex';
-            
-            fetch('/api/upload', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    loadMapData();
-                } else {
-                    throw new Error(data.error || 'Upload failed');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert(error.message);
-            })
-            .finally(() => {
-                if (loadingOverlay) loadingOverlay.style.display = 'none';
-            });
-        });
-    }
-    
-    // Handle clear data
-    const clearButton = document.getElementById('clear-data');
-    if (clearButton) {
-        clearButton.addEventListener('click', function() {
-            if (confirm('Clear all data?')) {
-                fetch('/api/clear', {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        clearMap();
-                        showEmptyAnalysisPanel();
-                    }
-                })
-                .catch(error => console.error('Error:', error));
+
+    fetch('/api/filters')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const areaSelect = document.getElementById('area-filter');
+                const accountSelect = document.getElementById('account-filter');
+
+                areaSelect.innerHTML = `<option value="">All Areas</option>`;
+                data.areas.forEach(area => {
+                    const opt = document.createElement('option');
+                    opt.value = area.area_id;
+                    opt.textContent = area.area_name;
+                    areaSelect.appendChild(opt);
+                });
+
+                accountSelect.innerHTML = '<option value="">All Accounts</option>'; // Reset options
+                data.accounts.forEach(acc => {
+                    const opt = document.createElement('option');
+                    opt.value = acc.account_id;
+                    opt.textContent = acc.account_name;
+                    accountSelect.appendChild(opt);
+                });
             }
         });
-    }
+
+    document.getElementById('apply-filters').addEventListener('click', loadMapData);
     
     // Show empty analysis panel on initial load
     showEmptyAnalysisPanel();
@@ -422,7 +358,7 @@ function showEmptyAnalysisPanel() {
     const contentHtml = `
         <div class="analysis-content">
             <div class="date-range" style="background: #f0f0f0; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
-                <p style="margin: 0; color: #666;">Upload a CSV file to view date range</p>
+                <p style="margin: 0; color: #666;">Apply the filter to see the data analytics here</p>
             </div>
             <div style="text-align: center; padding: 20px; color: #666;">
                 <p>Information will be displayed here after uploading data</p>
@@ -437,10 +373,4 @@ function showEmptyAnalysisPanel() {
     `;
     
     infoPanel.innerHTML = headerHtml + contentHtml;
-    
-    // Hide the area filter when clearing data
-    const filterContainer = document.querySelector('.filter-container');
-    if (filterContainer) {
-        filterContainer.style.display = 'none';
-    }
 }
