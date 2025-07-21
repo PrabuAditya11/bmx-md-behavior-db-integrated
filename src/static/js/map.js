@@ -34,6 +34,7 @@ function setupDateValidation() {
 
     const today = new Date().toISOString().split('T')[0];
     endInput.setAttribute('max', today);
+    startInput.setAttribute('max', today);
 
     startInput.addEventListener('change', function () {
         if (endInput.value && new Date(this.value) > new Date(endInput.value)) {
