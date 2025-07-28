@@ -15,9 +15,9 @@ class MapProcessor:
         if os.path.exists(self.data_file):
             os.remove(self.data_file)
 
-    def load_from_database(self, start_date, end_date, area_id=None, account_id=None):
+    def load_from_database(self, start_date, end_date, area_id=None, account_id=None, store_id=None):
         try:
-            key_string = f"{start_date}-{end_date}-{area_id}-{account_id}"
+            key_string = f"{start_date}-{end_date}-{area_id}-{account_id}-{store_id}"
             key_hash = hashlib.md5(key_string.encode()).hexdigest()
             cache_file = os.path.join('static', 'cache', f"{key_hash}.json")
 
@@ -28,6 +28,7 @@ class MapProcessor:
                 
             conn = get_db_connection()
 
+            #ini query buat nampilin data dari database
             sql = """
             SELECT 
                 a.longitude,
@@ -66,6 +67,10 @@ class MapProcessor:
             if account_id not in [None, '', 'null']:
                 sql += " AND e.account_id = %s"
                 params.append(account_id)
+            if store_id not in [None, '', 'null']:
+                sql += " AND c.store_id = %s"
+                params.append(store_id)
+                
 
             df = pd.read_sql(sql, conn, params=params)
             conn.close()

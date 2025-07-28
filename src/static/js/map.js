@@ -166,8 +166,9 @@ function loadMapData() {
     const end = document.getElementById('end-date').value;
     const area = document.getElementById('area-filter').value;
     const account = document.getElementById('account-filter').value;
+    const storeId = document.getElementById('store_id').value || null;
 
-    const url = `/api/data?start_date=${start}&end_date=${end}&area_id=${area}&account_id=${account}`;
+    const url = `/api/data?start_date=${start}&end_date=${end}&area_id=${area}&account_id=${account}&store_id=${storeId}`;
 
     const loadingOverlay = document.getElementById('loading-overlay');
     if (loadingOverlay) loadingOverlay.style.display = 'flex';

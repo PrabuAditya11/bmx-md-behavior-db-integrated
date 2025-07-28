@@ -12,8 +12,9 @@ def get_filtered_data():
     end_date = request.args.get('end_date')
     area_id = request.args.get('area_id') or None
     account_id = request.args.get('account_id') or None
+    store_id = request.args.get('store_id') or None
 
-    result = map_processor.load_from_database(start_date, end_date, area_id, account_id)
+    result = map_processor.load_from_database(start_date, end_date, area_id, account_id, store_id)
     return jsonify(result)
 
 @api_bp.route('/clear', methods=['POST'])
@@ -48,6 +49,7 @@ def clear_data():
             'error': f'Failed to clear data: {str(e)}'
         })
 
+#ini query buat nampilin dropdown filter nya
 @api_bp.route('/filters', methods=['GET'])
 def get_filters():
     try:
