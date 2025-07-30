@@ -171,7 +171,10 @@ function loadMapData() {
     const url = `/api/data?start_date=${start}&end_date=${end}&area_id=${area}&account_id=${account}&store_id=${storeId}`;
 
     const loadingOverlay = document.getElementById('loading-overlay');
-    if (loadingOverlay) loadingOverlay.style.display = 'flex';
+    if (loadingOverlay) {
+        loadingOverlay.classList.remove('hidden');
+        loadingOverlay.classList.add('flex');
+    }
 
     fetch(url)
         .then(response => response.json())
@@ -204,7 +207,10 @@ function loadMapData() {
             alert(error.message);
         })
         .finally(() => {
-            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            if (loadingOverlay) {
+                loadingOverlay.classList.remove('flex');
+                loadingOverlay.classList.add('hidden');
+            }
         });
 }
 
@@ -242,9 +248,10 @@ function updateInfoPanel(data) {
                         ${data.stats.date_range.start} to ${data.stats.date_range.end}
                     </p>
                 </div>
-                <button id="toggle-top5" class="btn btn-primary" style="margin-bottom: 10px;">
-                    ${showingTop5 ? 'Show All Points' : 'Show Top 5 Only'}
-                </button>
+                    <button id="toggle-top5"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-md transition mb-3">
+                        ${showingTop5 ? 'Show All Points' : 'Show Top 5 Only'}
+                    </button>
                 <p><strong>Total Points:</strong> ${data.stats.total_points}</p>
                 <p><strong>Total Stores:</strong> ${data.stats.total_stores}</p>
                 ${top5Html}
